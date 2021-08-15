@@ -22,15 +22,19 @@ const bookSchema = new mongoose.Schema({
   title: String,
   description: String,
   status: String,
-  email: String
+  email: String,
+  image: String
+});
+
+const librarySchema = new mongoose.Schema({
+  library: String,
+  books : [bookSchema]
 });
 
 
 
-
-
 const Book = mongoose.model('Book', bookSchema);
-
+const libraryModel = mongoose.model('library', librarySchema);
 
 
 
@@ -41,7 +45,8 @@ function seedBookCollection() {
     title: 'JavaScript',
     description: 'Startup book to learn JavaScript',
     status: 'Educational',
-    email: 'Gleave.alshater@hitmail.com'
+    email: 'Gleave.alshater@hotmail.com',
+    image: 'https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/old-books-arranged-on-shelf-royalty-free-image-1572384534.jpg?crop=0.668xw:1.00xh;0,0&resize=480:*'
 
   });
 
@@ -50,8 +55,8 @@ function seedBookCollection() {
     title: 'Html',
     description: 'Startup book to learn HTML',
     status: 'Educational',
-    email: 'Gleave.alshater@hotmail.com'
-
+    email: 'Gleave.alshater@hotmail.com',
+    image: 'https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/old-books-arranged-on-shelf-royalty-free-image-1572384534.jpg?crop=0.668xw:1.00xh;0,0&resize=480:*'
   });
 
   const Css = new Book({
@@ -59,8 +64,8 @@ function seedBookCollection() {
     title: 'Css',
     description: 'Startup book to learn CSS',
     status: 'Educational',
-    email: 'Gleave.alshater@hotmail.com'
-
+    email: 'Gleave.alshater@hotmail.com',
+    image: 'https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/old-books-arranged-on-shelf-royalty-free-image-1572384534.jpg?crop=0.668xw:1.00xh;0,0&resize=480:*'
   });
 
   javaScript.save();
@@ -102,7 +107,72 @@ if(err){
 
 
 
+//http://localhost:3001/addbooks
+app.post('/addbooks', getBooksHandler);
 
+
+function getBooksHandler(req,res) {
+
+const {email,title,description, status}=req.body;
+
+Book.find({email:email},(err,resultBooks)=> {
+
+  if (resultBooks.length == 0) {
+    // res.status(404).send("cant find any user");
+    const newObj = {
+      title: title,
+      description: description,
+      status: status,
+      email: email,
+    };
+    resultBooks.push(newObj);
+    let bookArr = resultBooks.map((i) => {
+      return new BooksSaver(i);
+    });
+    res.send(bookArr);
+    Book.insertMany(newObj);
+  } else {
+    const newObj = {
+      title: title,
+      description: description,
+      status: status,
+      email: email,
+    };
+    resultBooks.push(newObj);
+    let bookArr = resultBooks.map((i) => {
+      return new BooksSaver(i);
+    });
+    res.send(bookArr);
+    Book.insertMany(newObj);
+  }
+
+});
+}
+class BooksSaver {
+  constructor(i) {
+    this.title = i.title;
+    this.description = i.description;
+    this.status = i.status;
+  }
+}
+app.delete("/addbooks/:idx", deleteBook);
+
+//http://localhost:3001/addbooks/1
+function deleteBook(req, res) {
+  const idx = req.params.idx;
+  const email = req.query.email;
+// console.log(req.params)
+  Book.deleteOne({ email: email, _idx: idx });
+  Book.find({ email: email }, (err, result) => {
+    if (result.length == 0 || err) {
+      res.status(404).send("Error check it ");
+    } else {
+      res.send(result.data);
+            // result.data.save();
+
+    }
+  });
+}
 
 app.get('/test', (request, response) => {
 
